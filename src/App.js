@@ -1,26 +1,77 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter, Route, Switch, Link, NavLink } from 'react-router-dom';
+
+import { admin } from './firebase.js';
+
+import Navigation from './components/Navigation';
+import Login from './components/Login';
+import Home from './components/Home';
+import Contact from './components/Contact';
+import Dashboards from './components/Dashboards';
+import Logout from './components/Logout';
+import Register from './components/Register';
 
 class App extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      user:{},
+      authenticated: false,
+      data: '',
+    };
+  }
+
+  componentWillMount() {
+    // lets us know whether the user is authenticated or not
+    this.removeAuthListener = admin.auth().onAuthStateChanged((user) => {
+      if(user) {
+        this.setState({authenticated: true, loading: false});
+
+      } else {
+        this.setState({authenticated: false, loading: false});
+        //console.log('state in unmount:', this.state.authenticated);
+      }
+    });
+  }
+
+  componentDidMount(){
+    this.authListener();
+  }
+
+  componentWillUnmount() {
+    this.removeAuthListener();
+  }
+
+  authListener() {
+    admin.auth().onAuthStateChanged((user) => {
+      // console.log(user);
+      if(user) {
+        this.setState({user});
+      //  localStorage.setItem('user', user.uid);
+      } else {
+        this.setState({user: null});
+      //  localStorage.removeItem('user');
+      }
+    });
+  }
+
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
+      <BrowserRouter>
+        <div className="App">
+          <Navigation authenticated={this.state.authenticated} />
+          <Switch>
+            <Route exact path="/" component={Home} />
+            <Route path="/login" component={Login} />
+            <Route path="/contact" component={Contact} />
+            <Route path="/dashboards" component={Dashboards} />
+            <Route path="/logout" component={Logout} />
+            <Route path="/register" component={Register} />
+          </Switch>
+        </div>
+      </BrowserRouter>
     );
   }
 }
